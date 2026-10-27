@@ -88,8 +88,6 @@ class GraphsTab(ttk.Frame):
         for var in selected_vars:
             var_idx = self.variables.index(var)
             values = self.result.u[var_idx, :]
-            # Ограничить значения для отображения (0 ≤ u ≤ 1)
-            values = np.clip(values, 0.0, 1.0)
             self.ax.plot(t, values, label=var)
         
         self.ax.set_xlabel("Время")

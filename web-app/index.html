@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моделирование качества ПО на основе ISO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .tab-content {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .table-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .control-point {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="text-center"><i class="bi bi-calculator"></i> Моделирование качества ПО (ISO)</h1>
+                <p class="text-center text-muted">Модель на основе системной динамики</p>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="paramsTab" data-bs-toggle="tab" data-bs-target="#paramsContent" type="button">
+                    <i class="bi bi-gear"></i> Параметры
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="graphsTab" data-bs-toggle="tab" data-bs-target="#graphsContent" type="button">
+                    <i class="bi bi-graph-up"></i> Графики
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="disturbancesTab" data-bs-toggle="tab" data-bs-target="#disturbancesContent" type="button">
+                    <i class="bi bi-waves"></i> Возмущения
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="stateTableTab" data-bs-toggle="tab" data-bs-target="#stateTableContent" type="button">
+                    <i class="bi bi-pie-chart"></i> Состояние системы
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabsContent">
+            <!-- Вкладка параметров -->
+            <div class="tab-pane fade show active" id="paramsContent" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Реализация (начальные условия)</label>
+                        <select class="form-select" id="implementationSelect">
+                            <option value="1">Реализация 1</option>
+                            <option value="2">Реализация 2</option>
+                            <option value="3">Реализация 3</option>
+                            <option value="4">Реализация 4</option>
+                            <option value="5">Реализация 5</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Начало (t_start)</label>
+                        <input type="number" class="form-control" id="tStart" value="0.0" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Конец (t_end)</label>
+                        <input type="number" class="form-control" id="tEnd" value="1" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Шаг вывода</label>
+                        <select class="form-select" id="stepSelect">
+                            <option value="0.1">0.1 (быстро)</option>
+                            <option value="0.05" selected>0.05 (средне)</option>
+                            <option value="0.02">0.02 (точно)</option>
+                            <option value="0.01">0.01 (медленно)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" id="runSimulationBtn">
+                            <i class="bi bi-play-fill"></i> Запустить модель
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info" id="statusAlert" role="alert" style="display: none;"></div>
+
+                <div class="table-scroll">
+                    <table class="table table-striped table-hover" id="paramsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Переменная</th>
+                                <th>Описание</th>
+                                <th>Значение</th>
+                                <th>Максимум</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paramsBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="mb-1">Функции модели</h6>
+                    <p class="text-muted small mb-2">
+                        В каждом слоте можно выбрать любую из 187 функций f1…f187 и изменить коэффициенты её многочлена.
+                        Значения по умолчанию взяты из лабораторной (F3, F5, F9, F48, F72, F81, F117), остальные функции тождественные.
+                        Изменения действуют со следующего запуска модели.
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle" id="functionsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 120px;">Функция</th>
+                                    <th>Формула</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="functionsBody"></tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="resetFunctionsBtn">
+                        Сбросить все к значениям из лабораторной
+                    </button>
+                </div>
+            </div>
+
+            <!-- Вкладка графиков -->
+            <div class="tab-pane fade" id="graphsContent" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Выберите переменные для отображения</label>
+                        <select class="form-select" multiple style="height: 200px;" id="graphVarsSelect">
+                            <!-- Список заполняется из model/variables.js в GRAPHS_TAB.init() -->
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-success w-100" id="plotGraphBtn">
+                            <i class="bi bi-bar-chart"></i> Построить график
+                        </button>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Вкладка возмущений -->
+            <div class="tab-pane fade" id="disturbancesContent" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <p class="text-muted">Внешние факторы, влияющие на систему:</p>
+                        <ul>
+                            <li><strong>Fak1:</strong> Опыт разработчиков (t²)</li>
+                            <li><strong>Fak2:</strong> Опыт эксплуатантов (cos²)</li>
+                            <li><strong>Fak3:</strong> Трудоёмкость (sin(sin))</li>
+                            <li><strong>Fak4:</strong> Курс рубля (t)</li>
+                            <li><strong>Fak5:</strong> Репутация разработчиков (sin²)</li>
+                            <li><strong>Fak6:</strong> Репутация эксплуатанта (гармоническая)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="disturbancesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Вкладка состояния системы: лепестковая (радиальная) диаграмма -->
+            <div class="tab-pane fade" id="stateTableContent" role="tabpanel">
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label" for="radarTimeSlider">
+                            Момент времени: <strong id="radarTimeLabel">—</strong>
+                        </label>
+                        <input type="range" class="form-range" id="radarTimeSlider"
+                               min="0" max="0" step="1" value="0" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label d-block">Контрольные точки</label>
+                        <div class="btn-group btn-group-sm" role="group" id="radarControlPoints"></div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning" id="radarHint">
+                    <i class="bi bi-info-circle"></i> Сначала запустите модель на вкладке «Параметры»
+                </div>
+
+                <div class="chart-container" id="radarContainer" style="height: 640px; display: none;">
+                    <canvas id="stateRadar"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="model/variables.js"></script>
+    <script src="model/functions.js"></script>
+    <script src="model/disturbances.js"></script>
+    <script src="model/equations.js"></script>
+    <script src="model/solver.js"></script>
+    <script src="ui/params_tab.js"></script>
+    <script src="ui/graphs_tab.js"></script>
+    <script src="ui/disturbances_tab.js"></script>
+    <script src="ui/state_table.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

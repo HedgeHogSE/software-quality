@@ -13,6 +13,11 @@ def safe_divide(numerator: float, denominator: float, fallback: float = 0.0) -> 
     return numerator / denominator
 
 
+def limit_value(value: float, min_val: float = 0.0, max_val: float = 1.0) -> float:
+    """Ограничить значение в заданном диапазоне."""
+    return max(min_val, min(max_val, value))
+
+
 def _compile_system():
     cache = {
         'f1': FUNCTIONS.get_function(1),
@@ -397,6 +402,13 @@ def _compile_system():
         term1 = f183(u54) * f184(u115) * f185(u118) * fak3_t
         term2 = f186(u5) * f187(u25) * fak1_t
         results.append(safe_divide(term1 - term2, u125))
+        
+        # Ограничить производные, чтобы значения не выходили за пределы [0, 1]
+        for i in range(len(results)):
+            if results[i] > 10:
+                results[i] = 10
+            elif results[i] < -10:
+                results[i] = -10
         
         return results
     

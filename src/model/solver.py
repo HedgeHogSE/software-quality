@@ -40,9 +40,9 @@ def solve_system(
     t_start: float = None,
     t_end: float = None,
     step: float = None,
-    rtol: float = 1e-4,
-    atol: float = 1e-4,
-    method: str = 'RK45'
+    rtol: float = 1e-3,
+    atol: float = 1e-3,
+    method: str = 'Radau'
 ) -> SimulationResult:
     """
     Решить систему дифференциальных уравнений для указанной реализации.
@@ -52,9 +52,9 @@ def solve_system(
         t_start: начало интервала времени
         t_end: конец интервала времени
         step: шаг вывода результатов
-        rtol: относительная точность
-        atol: абсолютная точность
-        method: метод интегрирования ('RK45', 'Radau', 'BDF', и т.д.)
+        rtol: относительная точность (уменьшена для скорости)
+        atol: абсолютная точность (уменьшена для скорости)
+        method: метод интегрирования ('RK45', 'Radau', 'BDF')
     
     Returns:
         SimulationResult с результатами моделирования
@@ -70,7 +70,7 @@ def solve_system(
     u0 = get_initial_values(implementation)
     
     # Создать массив точек вывода
-    n_points = int((t_end - t_start) / step) + 1
+    n_points = max(101, int((t_end - t_start) / (step if step and step > 0 else 0.01)) + 1)
     t_eval = np.linspace(t_start, t_end, n_points)
     
     # Получить функцию системы
@@ -87,7 +87,7 @@ def solve_system(
             rtol=rtol,
             atol=atol,
             vectorized=False,
-            max_step=step if step else 0.01,
+            max_step=step if step and step > 0 else 0.1,
             events=None
         )
         
