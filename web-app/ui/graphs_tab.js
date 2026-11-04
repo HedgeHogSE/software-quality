@@ -257,10 +257,12 @@ const GRAPHS_TAB = {
             }
 
             const variable = VARIABLES[varIndex];
+            const style = this.getSeriesStyle(colorIndex);
             return {
                 label: variable ? variable.name : `u[${varIndex}]`,
                 data: data,
-                borderColor: this.getColor(colorIndex),
+                borderColor: style.color,
+                borderDash: style.dash,
                 borderWidth: 2,
                 pointRadius: 0,
                 tension: 0.3,
@@ -305,15 +307,32 @@ const GRAPHS_TAB = {
         }
     },
 
+    /**
+     * Чёрно-белые стили серий: оттенок (чёрный/серый) + штрих.
+     * Линий может быть до 28, поэтому одного цвета мало — серии
+     * различаются ещё и рисунком штриха, чтобы читались на ч/б печати.
+     */
+    _seriesStyles: [
+        { color: '#000000', dash: [] },
+        { color: '#000000', dash: [7, 4] },
+        { color: '#000000', dash: [2, 3] },
+        { color: '#000000', dash: [9, 3, 2, 3] },
+        { color: '#555555', dash: [] },
+        { color: '#555555', dash: [7, 4] },
+        { color: '#555555', dash: [2, 3] },
+        { color: '#555555', dash: [9, 3, 2, 3] },
+        { color: '#888888', dash: [] },
+        { color: '#888888', dash: [7, 4] },
+        { color: '#888888', dash: [2, 3] },
+        { color: '#888888', dash: [9, 3, 2, 3] }
+    ],
+
+    getSeriesStyle: function(index) {
+        return this._seriesStyles[index % this._seriesStyles.length];
+    },
+
     getColor: function(index) {
-        const colors = [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-            '#8AC926', '#1982C4', '#6A4C93', '#FA8231', '#FFC107', '#28A745',
-            '#DC3545', '#17A2B8', '#6610F2', '#6F42C1', '#e83e8c', '#FD7E14',
-            '#0D6EFD', '#198754', '#DC3545', '#FFC107', '#6610F2', '#1982C4',
-            '#4D5360', '#6D5C7A', '#C34A36', '#3C6382'
-        ];
-        return colors[index % colors.length];
+        return this.getSeriesStyle(index).color;
     },
 
     // Установить результат симуляции

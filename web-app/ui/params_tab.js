@@ -62,14 +62,42 @@ const PARAMS_TAB = {
     },
 
     /**
-     * Блок «Функции модели».
+     * Блок «Функции модели»: все 187 функций, каждая строка редактируема.
      *
-     * Семь слотов, как в панели «Уравнения» из лабораторной: в каждом можно
-     * выбрать любую из 187 функций и отредактировать коэффициенты её
-     * многочлена. По умолчанию показаны семь функций, коэффициенты которых
-     * известны (F3, F5, F9, F48, F72, F81, F117); остальные — тождественные.
+     * Тип функции фиксирован по номеру: у семи функций из лабораторной он свой
+     * (f3 — кубическая, f9/f72/f117 — квадратичные, f5/f48/f81 — линейные),
+     * у остальных 180 — линейная тождественная f(x) = x.
+     *
+     * Маппинг функций на переменные (из equations.js):
+     * f1→u26, f2→u54, f3→u55, ..., f187→u25
      */
-    functionSlots: [3, 5, 9, 48, 72, 81, 117],
+    _functionVarMap: [
+        null,
+        'u26', 'u54', 'u55', 'u56', 'u109', 'u110', 'u113', 'u123', 'u124',
+        'u54', 'u55', 'u114', 'u124',
+        'u5', 'u27', 'u28', 'u26', 'u54', 'u55', 'u107', 'u108', 'u109', 'u110', 'u111', 'u112', 'u115', 'u116', 'u117', 'u118', 'u124', 'u125',
+        'u27', 'u28', 'u115',
+        'u25', 'u113', 'u114', 'u117', 'u118', 'u124',
+        'u119', 'u120', 'u121', 'u122',
+        'u24',
+        'u54', 'u55', 'u108', 'u111', 'u112', 'u116', 'u124',
+        'u55', 'u123', 'u124',
+        'u54', 'u123', 'u124',
+        'u5',
+        'u54', 'u55', 'u56', 'u107', 'u108', 'u109', 'u110', 'u111', 'u112', 'u113', 'u114', 'u115', 'u116', 'u117', 'u118', 'u124', 'u125',
+        'u107', 'u108', 'u109', 'u110', 'u111', 'u112', 'u113', 'u114', 'u115', 'u116', 'u117', 'u118', 'u119', 'u120', 'u121', 'u122', 'u123', 'u124', 'u125',
+        'u108', 'u111', 'u124', 'u125',
+        'u107', 'u108', 'u109', 'u110', 'u111', 'u112', 'u113', 'u114', 'u115', 'u116', 'u117', 'u118', 'u119', 'u120', 'u121', 'u122', 'u123', 'u124', 'u125',
+        'u107', 'u108', 'u111', 'u112', 'u115', 'u117', 'u119', 'u120', 'u121',
+        'u120', 'u121', 'u122', 'u124',
+        'u54', 'u119', 'u121', 'u122', 'u123',
+        'u54', 'u55', 'u114', 'u119', 'u120', 'u122',
+        'u120',
+        'u123',
+        'u54', 'u55', 'u56', 'u113', 'u114', 'u115', 'u118', 'u125',
+        'u54', 'u55', 'u107', 'u108', 'u109', 'u110', 'u111', 'u112', 'u125',
+        'u54', 'u115', 'u118'
+    ],
 
     renderFunctions: function() {
         const body = document.getElementById('functionsBody');
@@ -78,43 +106,25 @@ const PARAMS_TAB = {
         }
         body.innerHTML = '';
 
-        this.functionSlots.forEach((n, slotIndex) => {
+        for (let n = 1; n <= 187; n++) {
             const spec = FUNCTIONS.getCoefficients(n);
             const row = document.createElement('tr');
             row.dataset.function = String(n);
-
-            // выбор номера функции
-            const selectCell = document.createElement('td');
-            const select = document.createElement('select');
-            select.className = 'form-select form-select-sm function-select';
-            select.style.width = '110px';
-            for (let i = 1; i <= 187; i++) {
-                const option = document.createElement('option');
-                option.value = String(i);
-                option.textContent = 'F' + i;
-                select.appendChild(option);
+            if (FUNCTIONS.EDITABLE.indexOf(n) >= 0) {
+                row.className = 'table-secondary';
             }
-            select.value = String(n);
-            select.addEventListener('change', () => this._selectFunction(slotIndex, parseInt(select.value, 10)));
-            selectCell.appendChild(select);
-            row.appendChild(selectCell);
 
-            // формула с полями коэффициентов
             const formulaCell = document.createElement('td');
             formulaCell.className = 'function-formula';
-            const prefix = document.createElement('span');
-            prefix.textContent = 'f(x) = ';
-            formulaCell.appendChild(prefix);
             this._buildFormula(formulaCell, spec, row, n);
             row.appendChild(formulaCell);
 
-            // сброс строки
             const actionCell = document.createElement('td');
             const resetButton = document.createElement('button');
             resetButton.type = 'button';
             resetButton.className = 'btn btn-sm btn-outline-secondary';
             resetButton.textContent = '↺';
-            resetButton.title = 'Сбросить F' + n;
+            resetButton.title = 'Сбросить f' + n;
             resetButton.addEventListener('click', () => {
                 FUNCTIONS.reset(n);
                 this.renderFunctions();
@@ -123,16 +133,20 @@ const PARAMS_TAB = {
             row.appendChild(actionCell);
 
             body.appendChild(row);
-        });
+        }
     },
 
-    /** Собрать формулу f(x) для данного типа функции. */
+    /** Собрать формулу f(varName) для данного типа функции. */
     _buildFormula: function(cell, spec, row, n) {
+        const varName = this._functionVarMap[n] || 'u_i';
+        const prefix = document.createElement('span');
+        prefix.textContent = 'f' + n + '(' + varName + ') = ';
+        cell.appendChild(prefix);
         const terms = {
-            linear: [['a', '·x + '], ['b', '']],
-            quadratic: [['a', '·x² + '], ['b', '·x + '], ['c', '']],
-            cubic: [['a', '·x³ + '], ['b', '·x² + '], ['c', '·x + '], ['d', '']]
-        }[spec.type] || [['a', '·x + '], ['b', '']];
+            linear: [['a', '·' + varName + ' + '], ['b', '']],
+            quadratic: [['a', '·' + varName + '² + '], ['b', '·' + varName + ' + '], ['c', '']],
+            cubic: [['a', '·' + varName + '³ + '], ['b', '·' + varName + '² + '], ['c', '·' + varName + ' + '], ['d', '']]
+        }[spec.type] || [['a', '·' + varName + ' + '], ['b', '']];
 
         terms.forEach(term => {
             const key = term[0];
@@ -143,7 +157,7 @@ const PARAMS_TAB = {
             input.className = 'form-control form-control-sm function-input d-inline-block';
             input.dataset.key = key;
             input.value = String(spec[key]);
-            input.step = '0.01';
+            input.step = '0.001';
             input.style.width = '85px';
             input.addEventListener('change', () => this._applyFunctionRow(row, n));
             cell.appendChild(input);
@@ -154,23 +168,6 @@ const PARAMS_TAB = {
                 cell.appendChild(text);
             }
         });
-    },
-
-    /**
-     * Переключить слот на другую функцию. Если такая функция уже показана
-     * в другом слоте — слоты обмениваются функциями, дублей не остаётся.
-     */
-    _selectFunction: function(slotIndex, n) {
-        const current = this.functionSlots[slotIndex];
-        if (n === current) {
-            return;
-        }
-        const otherIndex = this.functionSlots.indexOf(n);
-        if (otherIndex >= 0) {
-            this.functionSlots[otherIndex] = current;
-        }
-        this.functionSlots[slotIndex] = n;
-        this.renderFunctions();
     },
 
     /**
@@ -200,7 +197,7 @@ const PARAMS_TAB = {
             FUNCTIONS.setCoefficients(n, values);
             inputs.forEach(input => input.classList.remove('is-invalid'));
         } catch (error) {
-            console.warn('Не удалось применить коэффициенты F' + n + ': ' + error.message);
+            console.warn('Не удалось применить коэффициенты f' + n + ': ' + error.message);
             inputs.forEach(input => input.classList.add('is-invalid'));
         }
     },
@@ -216,11 +213,20 @@ const PARAMS_TAB = {
             this.loadImplementation(parseInt(e.target.value));
         });
 
-        // Сброс всех коэффициентов к значениям из лабораторной
+        // Сброс коэффициентов к значениям по умолчанию
         const resetAll = document.getElementById('resetFunctionsBtn');
         if (resetAll) {
             resetAll.addEventListener('click', () => {
                 FUNCTIONS.resetAll();
+                this.renderFunctions();
+            });
+        }
+
+        // Новые случайные значения для неизвестных функций
+        const randomize = document.getElementById('randomFunctionsBtn');
+        if (randomize) {
+            randomize.addEventListener('click', () => {
+                FUNCTIONS.randomize();
                 this.renderFunctions();
             });
         }

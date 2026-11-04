@@ -127,15 +127,14 @@
                 <div class="mt-4">
                     <h6 class="mb-1">Функции модели</h6>
                     <p class="text-muted small mb-2">
-                        В каждом слоте можно выбрать любую из 187 функций f1…f187 и изменить коэффициенты её многочлена.
-                        Значения по умолчанию взяты из лабораторной (F3, F5, F9, F48, F72, F81, F117), остальные функции тождественные.
-                        Изменения действуют со следующего запуска модели.
+                        Все 187 функций f1…f187. У семи функций коэффициенты заданы в лабораторной (строки выделены фоном),
+                        остальные заполнены случайными значениями и имеют случайный тип (линейная/квадратичная/кубическая).
+                        Коэффициенты можно менять; изменения действуют со следующего запуска модели.
                     </p>
-                    <div class="table-responsive">
+                    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
                         <table class="table table-sm align-middle" id="functionsTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 120px;">Функция</th>
                                     <th>Формула</th>
                                     <th style="width: 50px;"></th>
                                 </tr>
@@ -144,7 +143,10 @@
                         </table>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="resetFunctionsBtn">
-                        Сбросить все к значениям из лабораторной
+                        Сбросить все значения
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="randomFunctionsBtn">
+                        Случайные значения
                     </button>
                 </div>
             </div>

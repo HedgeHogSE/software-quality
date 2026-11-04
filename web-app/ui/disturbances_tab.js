@@ -1,12 +1,26 @@
 /**
- * UI компонент для вкладки "Возмущения"
+ * Вкладка «Возмущения»: шесть внешних факторов.
+ *
+ * График чёрно-белый, без легенды: подписи Fak1…Fak6 рисуются прямо у концов
+ * линий тем же плагином, что и на вкладке «Графики». Серии различаются
+ * оттенком и рисунком штриха, чтобы читались на ч/б печати.
  */
 const DISTURBANCES_TAB = {
     chart: null,
 
+    /** Чёрно-белые стили; порядок совпадает с Fak1…Fak6. */
+    _styles: [
+        { color: '#000000', dash: [] },
+        { color: '#000000', dash: [7, 4] },
+        { color: '#000000', dash: [2, 3] },
+        { color: '#555555', dash: [] },
+        { color: '#555555', dash: [7, 4] },
+        { color: '#888888', dash: [2, 3] }
+    ],
+
     init: function() {
-        const ctx = document.getElementById('disturbancesChart').getContext('2d');
-        this.chart = new Chart(ctx, {
+        const canvas = document.getElementById('disturbancesChart');
+        this.chart = new Chart(canvas.getContext('2d'), {
             type: 'line',
             data: {
                 labels: [],
@@ -17,11 +31,11 @@ const DISTURBANCES_TAB = {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'right'
+                        display: false
                     },
                     title: {
                         display: true,
-                        text: 'Внешние возмущения Fak1-Fak6'
+                        text: 'Внешние возмущения Fak1–Fak6'
                     }
                 },
                 scales: {
@@ -36,46 +50,53 @@ const DISTURBANCES_TAB = {
                             display: true,
                             text: 'Значение (0–1)'
                         },
-                        // Все факторы нормированы на [0, 1] (см. model/disturbances.js)
                         min: 0,
                         max: 1
                     }
                 }
-            }
+            },
+            // подписи у концов линий вместо легенды
+            plugins: [INLINE_LABELS_PLUGIN]
         });
     },
 
     plotDisturbances: function(tStart, tEnd) {
         const nPoints = 100;
-        const tValues = [];
-        const fakValues = [[], [], [], [], [], []];
-
         const step = (tEnd - tStart) / (nPoints - 1);
+        const functions = DISTURBANCES.getAll();
+        const names = ['Fak1', 'Fak2', 'Fak3', 'Fak4', 'Fak5', 'Fak6'];
+
+        const labels = [];
+        const series = names.map(() => []);
 
         for (let i = 0; i < nPoints; i++) {
             const t = tStart + i * step;
-            tValues.push(t.toFixed(3));
-            
-            fakValues[0].push(DISTURBANCES.fak1(t).toFixed(4));
-            fakValues[1].push(DISTURBANCES.fak2(t).toFixed(4));
-            fakValues[2].push(DISTURBANCES.fak3(t).toFixed(4));
-            fakValues[3].push(DISTURBANCES.fak4(t).toFixed(4));
-            fakValues[4].push(DISTURBANCES.fak5(t).toFixed(4));
-            fakValues[5].push(DISTURBANCES.fak6(t).toFixed(4));
+            labels.push(this._formatTime(t, step));
+            functions.forEach((fn, k) => {
+                series[k].push(Number(fn(t).toFixed(4)));
+            });
         }
 
-        const labels = tValues;
-        const datasets = [
-            { label: 'Fak1 (Опыт разработчиков)', data: fakValues[0], borderColor: '#FF6384', borderWidth: 2 },
-            { label: 'Fak2 (Опыт эксплуатантов)', data: fakValues[1], borderColor: '#36A2EB', borderWidth: 2 },
-            { label: 'Fak3 (Трудоёмкость)', data: fakValues[2], borderColor: '#FFCE56', borderWidth: 2 },
-            { label: 'Fak4 (Курс рубля)', data: fakValues[3], borderColor: '#4BC0C0', borderWidth: 2 },
-            { label: 'Fak5 (Репутация разработчиков)', data: fakValues[4], borderColor: '#9966FF', borderWidth: 2 },
-            { label: 'Fak6 (Репутация эксплуатанта)', data: fakValues[5], borderColor: '#FF9F40', borderWidth: 2 }
-        ];
+        const datasets = names.map((name, k) => {
+            const style = this._styles[k % this._styles.length];
+            return {
+                label: name,
+                data: series[k],
+                borderColor: style.color,
+                borderDash: style.dash,
+                borderWidth: 2,
+                pointRadius: 0
+            };
+        });
 
-        this.chart.data = { labels, datasets };
+        this.chart.data = { labels: labels, datasets: datasets };
         this.chart.update();
+    },
+
+    /** Подпись времени с числом знаков, достаточным для шага сетки. */
+    _formatTime: function(value, step) {
+        const decimals = Math.min(6, Math.max(0, Math.ceil(-Math.log10(step)) + 1));
+        return Number(value.toFixed(decimals)).toString();
     }
 };
 

@@ -210,28 +210,28 @@ const STATE_TABLE = {
                     {
                         label: 'Состояние',
                         data: [],
-                        borderColor: '#0d6efd',
-                        backgroundColor: 'rgba(13, 110, 253, 0.15)',
+                        borderColor: '#000000',
+                        backgroundColor: 'rgba(0, 0, 0, 0.12)',
                         borderWidth: 2,
                         pointRadius: 2.5,
-                        pointBackgroundColor: '#0d6efd'
+                        pointBackgroundColor: '#000000'
                     },
                     {
                         label: initialLabel,
                         data: [],
-                        borderColor: '#6c757d',
+                        borderColor: '#666666',
                         backgroundColor: 'transparent',
                         borderWidth: 1.5,
-                        borderDash: [3, 3],
+                        borderDash: [4, 3],
                         pointRadius: 0
                     },
                     {
                         label: 'Максимум',
                         data: [],
-                        borderColor: '#dc3545',
+                        borderColor: '#000000',
                         backgroundColor: 'transparent',
                         borderWidth: 1.5,
-                        borderDash: [6, 4],
+                        borderDash: [8, 3, 2, 3],
                         pointRadius: 0
                     }
                 ]
