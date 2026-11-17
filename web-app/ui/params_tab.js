@@ -136,38 +136,64 @@ const PARAMS_TAB = {
         }
     },
 
-    /** Собрать формулу f(varName) для данного типа функции. */
+    /** Собрать формулу fₙ(uᵢ) для данного типа функции. */
     _buildFormula: function(cell, spec, row, n) {
-        const varName = this._functionVarMap[n] || 'u_i';
-        const prefix = document.createElement('span');
-        prefix.textContent = 'f' + n + '(' + varName + ') = ';
-        cell.appendChild(prefix);
-        const terms = {
-            linear: [['a', '·' + varName + ' + '], ['b', '']],
-            quadratic: [['a', '·' + varName + '² + '], ['b', '·' + varName + ' + '], ['c', '']],
-            cubic: [['a', '·' + varName + '³ + '], ['b', '·' + varName + '² + '], ['c', '·' + varName + ' + '], ['d', '']]
-        }[spec.type] || [['a', '·' + varName + ' + '], ['b', '']];
+        const varName = this._functionVarMap[n] || 'ui';
+        const uIndex = varName.slice(1);
 
-        terms.forEach(term => {
-            const key = term[0];
-            const suffix = term[1];
+        // Создать DOM-элементы для формулы
+        const formula = document.createElement('span');
 
+        // fₙ(
+        formula.appendChild(document.createTextNode('f'));
+        const fSub = document.createElement('sub');
+        fSub.textContent = n;
+        formula.appendChild(fSub);
+        formula.appendChild(document.createTextNode('('));
+
+        // uᵢ
+        formula.appendChild(document.createTextNode('u'));
+        const uSub = document.createElement('sub');
+        uSub.textContent = uIndex;
+        formula.appendChild(uSub);
+        formula.appendChild(document.createTextNode(') = '));
+
+        // Коэффициенты с переменными и степенями
+        const coefficientKeys = ['a', 'b', 'c', 'd'];
+
+        coefficientKeys.forEach((key, idx) => {
             const input = document.createElement('input');
-            input.type = 'number';
-            input.className = 'form-control form-control-sm function-input d-inline-block';
+            input.type = 'text';
+            input.className = 'function-input';
             input.dataset.key = key;
             input.value = String(spec[key]);
-            input.step = '0.001';
-            input.style.width = '85px';
+            const updateWidth = () => {
+                input.style.setProperty('--coefficient-width', Math.max(1, input.value.length) + 'ch');
+            };
+            updateWidth();
+            input.addEventListener('input', updateWidth);
             input.addEventListener('change', () => this._applyFunctionRow(row, n));
-            cell.appendChild(input);
+            formula.appendChild(input);
 
-            if (suffix) {
-                const text = document.createElement('span');
-                text.textContent = ' ' + suffix;
-                cell.appendChild(text);
+            const power = coefficientKeys.length - idx - 1;
+            if (power === 0) {
+                return;
             }
+
+            formula.appendChild(document.createTextNode('·u'));
+            const varSub = document.createElement('sub');
+            varSub.textContent = uIndex;
+            formula.appendChild(varSub);
+
+            if (power > 1) {
+                const sup = document.createElement('sup');
+                sup.textContent = power;
+                formula.appendChild(sup);
+            }
+            formula.appendChild(document.createTextNode(' + '));
         });
+
+        cell.appendChild(formula);
     },
 
     /**

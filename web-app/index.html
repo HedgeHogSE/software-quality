@@ -28,6 +28,36 @@
             font-weight: bold;
             color: #0d6efd;
         }
+        .function-formula {
+            font-size: 1.0625rem;
+        }
+        .function-input {
+            box-sizing: content-box;
+            width: var(--coefficient-width);
+            padding: 2px 4px;
+            font-size: 13px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        @supports (field-sizing: content) {
+            .function-input {
+                field-sizing: content;
+                width: auto;
+                min-width: 1ch;
+            }
+        }
+        sub, sup {
+            font-size: 0.75em;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline;
+        }
+        sub {
+            bottom: -0.25em;
+        }
+        sup {
+            top: -0.5em;
+        }
         .chart-container {
             position: relative;
             height: 400px;
@@ -128,7 +158,8 @@
                     <h6 class="mb-1">Функции модели</h6>
                     <p class="text-muted small mb-2">
                         Все 187 функций f1…f187. У семи функций коэффициенты заданы в лабораторной (строки выделены фоном),
-                        остальные заполнены случайными значениями и имеют случайный тип (линейная/квадратичная/кубическая).
+                        для остальных коэффициенты сгенерированы. У каждой функции четыре поля.
+                        Коэффициенты при отсутствовавших степенях изначально равны нулю.
                         Коэффициенты можно менять; изменения действуют со следующего запуска модели.
                     </p>
                     <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">

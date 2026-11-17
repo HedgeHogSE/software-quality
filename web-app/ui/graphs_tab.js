@@ -27,7 +27,7 @@ const INLINE_LABELS_PLUGIN = {
             return;
         }
 
-        const MIN_GAP = 12;
+        const fontSize = 13;
         const entries = [];
 
         chart.data.datasets.forEach((dataset, index) => {
@@ -62,15 +62,16 @@ const INLINE_LABELS_PLUGIN = {
         }
 
         // Развести подписи по вертикали
-        const top = area.top + 8;
-        const bottom = area.bottom - 8;
+        const top = area.top + 9;
+        const bottom = area.bottom - 9;
+        const minGap = Math.min(fontSize + 1, (bottom - top) / Math.max(1, entries.length - 1));
         entries.sort((a, b) => a.y - b.y);
         entries.forEach(entry => {
             entry.y = Math.min(bottom, Math.max(top, entry.y));
         });
         for (let i = 1; i < entries.length; i++) {
-            if (entries[i].y - entries[i - 1].y < MIN_GAP) {
-                entries[i].y = entries[i - 1].y + MIN_GAP;
+            if (entries[i].y - entries[i - 1].y < minGap) {
+                entries[i].y = entries[i - 1].y + minGap;
             }
         }
         // Если пачка упёрлась в нижнюю границу — сдвинуть её вверх
@@ -78,8 +79,8 @@ const INLINE_LABELS_PLUGIN = {
         if (overflow > 0) {
             entries.forEach(entry => { entry.y -= overflow; });
             for (let i = entries.length - 2; i >= 0; i--) {
-                if (entries[i + 1].y - entries[i].y < MIN_GAP) {
-                    entries[i].y = entries[i + 1].y - MIN_GAP;
+                if (entries[i + 1].y - entries[i].y < minGap) {
+                    entries[i].y = entries[i + 1].y - minGap;
                 }
             }
             entries.forEach(entry => {
@@ -88,7 +89,7 @@ const INLINE_LABELS_PLUGIN = {
         }
 
         ctx.save();
-        ctx.font = '11px sans-serif';
+        ctx.font = `${fontSize}px sans-serif`;
         ctx.textBaseline = 'middle';
         ctx.lineJoin = 'round';
         ctx.lineWidth = 3;

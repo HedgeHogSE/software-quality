@@ -1,16 +1,14 @@
 /**
  * Реестр функций f1…f187.
  *
- * Типы:
- *  - linear:    f(x) = a·x + b
- *  - quadratic: f(x) = a·x² + b·x + c
- *  - cubic:     f(x) = a·x³ + b·x² + c·x + d
+ * Все функции в реестре имеют вид f(x) = a·x³ + b·x² + c·x + d.
+ * Для исходных линейных и квадратичных функций старшие коэффициенты равны нулю.
  *
  * В исходной лабораторной коэффициенты заданы только для семи функций
  * (панель «Уравнения», см. скриншот): F3, F5, F9, F48, F72, F81, F117.
- * Остальные 180 функций определены как тождественные f(x) = x.
+ * Для остальных 180 функций начальные коэффициенты генерируются.
  *
- * Коэффициенты этих семи функций можно менять из интерфейса. Изменения
+ * Коэффициенты всех функций можно менять из интерфейса. Изменения
  * повышают `version`; таблица функций в equations.js пересобирается,
  * поэтому новый расчёт идёт уже с новыми значениями.
  */
@@ -18,7 +16,7 @@ const FUNCTIONS = {
     /** Номера функций, коэффициенты которых известны из лабораторной. */
     EDITABLE: [3, 5, 9, 48, 72, 81, 117],
 
-    /** Значения по умолчанию для известных функций (остальные — тождественные). */
+    /** Коэффициенты известных функций в исходной записи. */
     KNOWN_DEFAULTS: {
         3: { type: 'cubic', a: 0.2, b: 0.8, c: 0.2, d: 0.09 },
         5: { type: 'linear', a: 0.25, b: 0.5, c: 0.0, d: 0.0 },
@@ -124,7 +122,13 @@ const FUNCTIONS = {
 
         for (let i = 1; i <= 187; i++) {
             const known = this.KNOWN_DEFAULTS[i];
-            const spec = known ? Object.assign({}, known) : this._randomSpec();
+            const { type, a, b, c, d } = known || this._randomSpec();
+            const spec = { a, b, c, d };
+            if (type === 'linear') {
+                Object.assign(spec, { a: 0, b: 0, c: a, d: b });
+            } else if (type === 'quadratic') {
+                Object.assign(spec, { a: 0, b: a, c: b, d: c });
+            }
             this._defaults[i] = spec;
             this._registry[i] = Object.assign({}, spec);
         }
@@ -150,16 +154,7 @@ const FUNCTIONS = {
 
         const func = this._registry[n];
 
-        if (func.type === 'linear') {
-            return (x) => func.a * x + func.b;
-        }
-        if (func.type === 'quadratic') {
-            return (x) => func.a * x * x + func.b * x + func.c;
-        }
-        if (func.type === 'cubic') {
-            return (x) => func.a * x * x * x + func.b * x * x + func.c * x + func.d;
-        }
-        return (x) => x;
+        return (x) => func.a * x * x * x + func.b * x * x + func.c * x + func.d;
     },
 
     /** Текущие коэффициенты функции (копия). */
@@ -168,7 +163,7 @@ const FUNCTIONS = {
         if (!func) {
             return null;
         }
-        return { type: func.type, a: func.a, b: func.b, c: func.c, d: func.d };
+        return { ...func };
     },
 
     /** Совпадают ли коэффициенты со значениями из лабораторной. */
@@ -178,13 +173,12 @@ const FUNCTIONS = {
         if (!current || !original) {
             return false;
         }
-        return current.type === original.type &&
-            current.a === original.a && current.b === original.b &&
+        return current.a === original.a && current.b === original.b &&
             current.c === original.c && current.d === original.d;
     },
 
     /**
-     * Задать коэффициенты. Тип функции не меняется.
+     * Задать коэффициенты при степенях 3, 2, 1 и 0 соответственно.
      * @param {number} n - номер функции
      * @param {object} values - {a, b, c, d}; отсутствующие ключи не меняются
      * @throws {Error} если значения не числа
@@ -195,13 +189,7 @@ const FUNCTIONS = {
             throw new Error(`Функция f${n} не существует`);
         }
 
-        const next = {
-            type: current.type,
-            a: current.a,
-            b: current.b,
-            c: current.c,
-            d: current.d
-        };
+        const next = { ...current };
 
         ['a', 'b', 'c', 'd'].forEach(key => {
             if (values[key] === undefined) {
